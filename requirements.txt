@@ -1,0 +1,6 @@
+git+https://github.com/codelif/myaakash
+flask
+flask-login
+flask-sqlalchemy
+python-dotenv
+psycopg2-binary

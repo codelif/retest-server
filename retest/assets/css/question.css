@@ -1,0 +1,85 @@
+#content {
+  display: grid;
+  grid-template-columns: 1fr;
+  justify-content: center;
+  margin-inline: auto;
+  padding: 1rem;
+  gap: 0.5rem;
+}
+
+sl-card.card-header::part(base) {
+  width: 100%;
+}
+
+.questions {
+  display: flex;
+  flex-direction: column;
+  /* align-items: center; */
+  /* max-width: 40rem; */
+  padding: 1rem;
+  /* justify-content: space-evenly; */
+}
+
+sl-button {
+  width: 100%;
+  overflow: auto;
+}
+span.radio--medium {
+  align-items: center !important;
+}
+
+#content figure {
+  overflow: auto;
+  margin-left: 0;
+  margin-right: 0;
+  width: 100% !important;
+}
+
+#content img {
+  filter: invert(0.85);
+}
+
+#content .solution img {
+  filter: invert(0.896);
+}
+
+sl-details.custom-icons::part(content) {
+  overflow: auto;
+}
+
+sl-card.card-header::part(body) {
+  overflow: auto;
+}
+
+sl-input {
+  max-width: 30rem;
+}
+.card-header {
+  width: 100%;
+  max-width: 60rem;
+  margin: 0.25rem 0;
+}
+
+.card-header [slot="header"] {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+sl-details.custom-icons::part(summary-icon) {
+  /* Disable the expand/collapse animation */
+  rotate: none;
+}
+
+sl-badge {
+  margin-top: 10px;
+  margin-bottom: 0;
+  display: flex;
+}
+
+.card-basic {
+  width: 100%;
+}
+
+sl-divider {
+  margin: var(--spacing) 0;
+}

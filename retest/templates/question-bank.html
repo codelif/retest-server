@@ -1,0 +1,31 @@
+{% extends "base.html" %} {% block title %}Question Bank{% endblock %} {% block head
+%}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/question-bank.css') }}" />
+<script type="module"
+  src="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.15.0/cdn/shoelace-autoloader.js"></script>
+{% endblock head %} {% block content %}
+
+
+<sl-tab-group>
+  {% for sub in chapters.keys() %}
+  <sl-tab slot="nav" panel="{{ sub }}">{{ sub }}</sl-tab>
+  {% endfor %}
+  {% for sub, chaps in chapters.items() %}
+  <sl-tab-panel name="{{ sub }}">
+    <div>
+      {% for chap in chaps %}
+      <sl-button onclick="location.href='/s/{{ sub }}/c/{{ chap }}';" size="large" variant="default">
+        {{ chap }}
+      </sl-button>
+
+      {% endfor %}
+
+
+    </div>
+  </sl-tab-panel>
+
+  {% endfor %}
+
+</sl-tab-group>
+
+{% endblock content %}

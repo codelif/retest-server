@@ -1,0 +1,17 @@
+{
+  "regions": [
+    "bom1"
+  ],
+  "builds": [
+    {
+      "src": "./retest/index.py",
+      "use": "@vercel/python"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "/retest"
+    }
+  ]
+}

@@ -1,0 +1,68 @@
+{% extends "base.html" %} {% block title %}Dashboard{% endblock %} {% block head
+%}
+<link
+  rel="stylesheet"
+  href="{{ url_for('static', filename='css/dashboard.css') }}"
+/>
+<script
+  type="module"
+  src="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.15.0/cdn/shoelace-autoloader.js"
+></script>
+{% endblock head %} {% block content %}
+<sl-card class="card-basic sync-ring">
+  <p><strong>Sync Progress</strong></p>
+  <sl-progress-ring
+    value="50"
+    style="--indicator-color: deeppink; --size: 8rem; --track-width: 0.5rem"
+    >50%
+  </sl-progress-ring>
+</sl-card>
+<sl-card class="card-basic sync-settings">
+  <h2>Sync Settings</h2>
+
+  <div class="test-option">
+    <p><strong>Test Type</strong></p>
+    <div id="test-types">
+      <sl-checkbox name="fts">Final Test Series</sl-checkbox>
+      <sl-checkbox name="ats">Archive Test Series</sl-checkbox>
+      <sl-checkbox name="aiats">AIATS</sl-checkbox>
+      <sl-checkbox name="pt">Practice Test</sl-checkbox>
+      <sl-checkbox name="ut">Unit Test (Only JEE Mains)</sl-checkbox>
+      <sl-checkbox name="tt">Term Test</sl-checkbox>
+    </div>
+  </div>
+  <div class="test-option">
+    <p><strong>Test Pattern</strong></p>
+    <div id="test-patterns">
+      <sl-checkbox name="mains">JEE Mains</sl-checkbox>
+      <sl-checkbox name="adv">JEE Advanced</sl-checkbox>
+    </div>
+  </div>
+  <sl-button type="button" variant="danger" onclick="sync();">Sync</sl-button>
+</sl-card>
+<sl-card class="card-basic tests">
+  <h2>Tests</h2>
+  <div>
+    <p><strong>Upcoming:</strong></p>
+    <ul>
+      <li>Archive Test Series - 1</li>
+    </ul>
+  </div>
+  <div>
+    <p><strong>Live:</strong></p>
+    <ul>
+      <li>Final Test Series, Paper 1</li>
+      <li>Final Test Series, Paper 2</li>
+    </ul>
+  </div>
+</sl-card>
+<sl-card class="card-basic tribyte-soon">
+  <img
+    src="https://learn.aakashitutor.com/sites/all/themes/learn_aakash/images/home/logo-aakash.png"
+    alt=""
+  />
+  <p>Coming Soon...</p>
+</sl-card>
+<script src="{{ url_for('static', filename='js/notify.js') }}"></script>
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+{% endblock content %}

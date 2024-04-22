@@ -1,0 +1,16 @@
+#content {
+  display: grid;
+  grid-template-columns: 1fr;
+  padding-inline: 0.5rem;
+  gap: 0.5rem;
+}
+
+sl-button {
+  width: 100%;
+  overflow: auto;
+}
+
+sl-tab-group {
+  max-width: 40rem;
+  min-width: 0;
+}

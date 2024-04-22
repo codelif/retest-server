@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en" class="sl-theme-dark">
+  <head>
+    <title>Login</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link
+      href="{{ url_for('static', filename='css/login.css') }}"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.15.0/cdn/themes/dark.css"
+    />
+    <script
+      type="module"
+      src="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.15.0/cdn/components/button/button.js"
+    ></script>
+    <script
+      type="module"
+      src="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.15.0/cdn/components/card/card.js"
+    ></script>
+    <script
+      type="module"
+      src="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.15.0/cdn/components/input/input.js"
+    ></script>
+    <script
+      type="module"
+      src="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.15.0/cdn/components/icon/icon.js"
+    ></script>
+    <script
+      type="module"
+      src="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.15.0/cdn/components/alert/alert.js"
+    ></script>
+
+    <script
+      type="module"
+      src="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.15.0/cdn/components/icon-button/icon-button.js"
+    ></script>
+    <link
+      href="https://api.fontshare.com/v2/css?f[]=satoshi@1&display=swap"
+      rel="stylesheet"
+    />
+    <script src="{{ url_for('static', filename='js/notify.js') }}"></script>
+  </head>
+
+  <body>
+    <div class="container">
+      <sl-card class="card-basic">
+        <form class="form" onsubmit="login(event)">
+          <div class="brand">
+            <img
+              src="{{ url_for('static', filename='logo-transparent.png') }}"
+            />
+            <h2>Retest</h2>
+          </div>
+          <p>Login with your MyAakash credentials.</p>
+          <sl-input
+            id="psid"
+            type="text"
+            placeholder="PSID"
+            value=""
+          ></sl-input>
+          <sl-input
+            id="password"
+            type="password"
+            value=""
+            placeholder="Password"
+          ></sl-input>
+          <sl-button type="submit">Login</sl-button>
+        </form>
+      </sl-card>
+    </div>
+    <script>
+      function login(e) {
+        e.preventDefault();
+        const psid = document.getElementById("psid").value;
+        const pswd = document.getElementById("password").value;
+        const data = JSON.stringify({
+          psid: psid,
+          pswd: pswd,
+        });
+
+        fetch("/login", {
+          method: "POST",
+          body: data,
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }).then((e) => {
+          if (e.ok) {
+            e.json().then((s) => {
+              notify(
+                "Welcome " + s["name"] + "! Logging you in...",
+                "success",
+                "check2-circle",
+              );
+              setTimeout(() => {
+                window.location = "/";
+              }, 2000);
+            });
+            // location.href = "/dashboard"
+          } else if (e.status == 401) {
+            notify(
+              "Please check your credentials.",
+              "danger",
+              "exclamation-octagon",
+            );
+          } else {
+            notify(
+              "An Error has occured while logging you in!",
+              "danger",
+              "exclamation-octagon",
+            );
+          }
+        });
+      }
+    </script>
+  </body>
+</html>

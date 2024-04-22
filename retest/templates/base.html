@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en" class="sl-theme-dark">
+  <head>
+    <title>{% block title %}{% endblock %} - Retest</title>
+    <meta charset="UTF-8" />
+    <link rel="shortcut icon" href="{{ url_for('static', filename='logo-transparent.png')}}" type="image/x-icon">
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link
+      href="{{ url_for('static', filename='css/base.css') }}"
+      rel="stylesheet"
+    />
+
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.15.0/cdn/themes/dark.css"
+    />
+    <script
+      type="module"
+      src="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.15.0/cdn/components/dropdown/dropdown.js"
+    ></script>
+    <script
+      type="module"
+      src="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.15.0/cdn/components/avatar/avatar.js"
+    ></script>
+    <script
+      type="module"
+      src="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.15.0/cdn/components/menu/menu.js"
+    ></script>
+    <script
+      type="module"
+      src="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.15.0/cdn/components/menu-item/menu-item.js"
+    ></script>
+    <script
+      type="module"
+      src="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.15.0/cdn/components/divider/divider.js"
+    ></script>
+    <script
+      type="module"
+      src="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.15.0/cdn/components/icon/icon.js"
+    ></script>
+    <script
+      type="module"
+      src="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.15.0/cdn/components/drawer/drawer.js"
+    ></script>
+    <script
+      type="module"
+      src="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.15.0/cdn/components/card/card.js"
+    ></script>
+    <script
+      type="module"
+      src="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.15.0/cdn/components/alert/alert.js"
+    ></script>
+    <link
+      href="https://api.fontshare.com/v2/css?f[]=satoshi@1&display=swap"
+      rel="stylesheet"
+    />
+    {% block head %} {% endblock %}
+  </head>
+
+  <body>
+    <div class="container">
+      <header id="navbar">
+        <div
+          class="brand"
+          onclick="document.querySelector('.mob-sidebar').show()"
+        >
+          <img
+            class="logo"
+            src="{{ url_for('static', filename='logo-transparent.png') }}"
+            alt=""
+          />
+          <h2>Retest</h2>
+        </div>
+        <div class="nav-settings">
+          <sl-dropdown distance="4" skidding="15">
+            <div slot="trigger" class="nav-profile">
+              <div class="nav-profile-name">
+                <p>{{ name }}</p>
+                <p align="right" style="color: grey">Student</p>
+              </div>
+              <sl-avatar></sl-avatar>
+            </div>
+            <!-- <sl-button slot="trigger" caret>Dropdown</sl-button> -->
+            <sl-menu>
+              <sl-menu-item><a href="/profile">Profile</a></sl-menu-item>
+              <sl-menu-item type="checkbox" checked>Dark Mode</sl-menu-item>
+              <sl-divider></sl-divider>
+              <sl-menu-item>
+                <sl-icon slot="prefix" name="door-closed"></sl-icon>
+                <a href="/logout">Logout</a>
+              </sl-menu-item>
+            </sl-menu>
+          </sl-dropdown>
+          <!-- <sl-avatar initials="SL" label="Avatar with initials: SL"></sl-avatar> -->
+        </div>
+      </header>
+      <aside class="sidebar">
+        <p><strong>Academics</strong></p>
+        <ul>
+          <li onclick="location.href='/tests'">Test Review</li>
+          <li onclick="location.href='/question-bank'">Question Bank</li>
+          <li>Books</li>
+        </ul>
+      </aside>
+      <sl-drawer
+        class="mob-sidebar"
+        label="Drawer"
+        placement="start"
+        class="drawer-placement-start"
+      >
+        <div
+          class="side-brand"
+          onclick="document.querySelector('.mob-sidebar').show()"
+        >
+          <img
+            class="logo"
+            src="{{ url_for('static', filename='logo-transparent.png') }}"
+            alt=""
+          />
+        </div>
+        <p><strong>Academics</strong></p>
+        <ul>
+          <li onclick="location.href='/tests'">Test Review</li>
+          <li onclick="location.href='/question-bank'">Question Bank</li>
+          <li>Books</li>
+        </ul>
+      </sl-drawer>
+      <main id="content">{% block content %} {% endblock %}</main>
+      <footer id="footer">
+        <p>Made without React by Harsh Sharma</p>
+        <p>or with Vue, Svelte, or other redundant tech.</p>
+      </footer>
+    </div>
+    <script></script>
+  </body>
+</html>

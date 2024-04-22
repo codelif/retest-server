@@ -1,0 +1,81 @@
+#content {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 2fr;
+  grid-gap: 1rem;
+  padding: 1rem;
+}
+
+.card-basic::part(base),
+.card-basic::part(body) {
+  height: 100%;
+  width: 100%;
+}
+
+@media (max-width: 55rem) {
+  #content {
+    grid-template-columns: 1fr;
+    grid-template-rows: 1fr 1fr 1fr 1fr;
+  }
+}
+
+@media (min-width: 85rem) {
+  #content {
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+    grid-template-rows: 1fr;
+  }
+  .card-basic::part(base) {
+    height: 30rem;
+  }
+}
+
+.sync-ring::part(body) {
+  display: flex;
+  flex-flow: row nowrap;
+  justify-content: space-evenly;
+  align-items: center;
+}
+.sync-ring > p {
+  font-size: 2rem;
+}
+
+.tests::part(body) {
+  display: flex;
+  flex-direction: column;
+}
+
+.tests > h2 {
+  font-size: 2rem;
+  margin-bottom: 1.2rem;
+}
+.tests > div > p {
+  font-size: 1.2rem;
+  margin-bottom: 0.5rem;
+}
+.tests > div {
+  /* height: 100%; */
+  margin-bottom: 1.5rem;
+}
+
+.tests li {
+  list-style: circle;
+  list-style-position: inside;
+}
+
+.tribyte-soon {
+  text-align: center;
+}
+
+.sync-settings > h2 {
+  font-size: 2rem;
+}
+.test-option > div {
+  display: flex;
+  flex-direction: column;
+}
+.test-option > p {
+  font-size: 1.2rem;
+}
+.test-option {
+  margin: 1.2rem 0;
+}

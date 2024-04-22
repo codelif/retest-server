@@ -1,0 +1,58 @@
+{% extends "base.html" %} {% block title %}Question Bank{% endblock %} {% block head
+%}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/question.css') }}" />
+<script type="module"
+  src="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.15.0/cdn/shoelace-autoloader.js"></script>
+<script id="MathJax-script" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.9/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+{% endblock head %} {% block content %}
+
+<div>
+  <sl-card class="card-header" value="{{ question_id }}">
+    <div slot="header">
+      <span class="question-header">Question #{{ question_id }}</span>
+      <sl-dropdown>
+        <sl-icon-button name="gear" label="Settings" slot="trigger"></sl-icon-button>
+        <sl-menu>
+          <sl-menu-item value="reset">Reset</sl-menu-item>
+          <sl-menu-item value="copy">Copy</sl-menu-item>
+        </sl-menu>
+      </sl-dropdown>
+    </div>
+
+    <span class="question">{{ question | safe }}</span>
+    {% if not is_correct %}
+    <sl-badge variant="danger">Weak Point</sl-badge>
+    {% endif %}
+    <sl-divider></sl-divider>
+    <div class="answer" , value="{{ answer }}">
+      {% if choice_type %}
+      <div class="choice-group">
+        <sl-card class="card-basic choice" value="1">
+          <div>{{ choice[0] | safe }}</div>
+        </sl-card>
+        <sl-card class="card-basic choice" value="2">
+          <div>{{ choice[1] | safe }}</div>
+        </sl-card>
+        <sl-card class="card-basic choice" value="3">
+          <div>{{ choice[2] | safe }}</div>
+        </sl-card>
+        <sl-card class="card-basic choice" value="4">
+          <div>{{ choice[3] | safe }}</div>
+        </sl-card>
+      </div>
+      {% else %}
+      <sl-input type="number" step=".01"></sl-input>
+      {% endif %}
+    </div>
+    <sl-divider></sl-divider>
+    <sl-details summary="Solution" class="custom-icons">
+      <sl-icon name="plus-square" slot="expand-icon"></sl-icon>
+      <sl-icon name="dash-square" slot="collapse-icon"></sl-icon>
+      <span class="solution">{{ solution | safe }}</span>
+      Answer is {{ answer }}
+    </sl-details>
+  </sl-card>
+
+</div>
+{% endblock content %}
