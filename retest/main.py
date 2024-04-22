@@ -126,8 +126,9 @@ def test_filter(test: dict, filter: dict) -> bool:
 
 @main.get("/tests")
 def get_tests():
-
-    user = MyAakashSession.query.filter_by(psid="00002588208").first()
+    user = current_user
+    if not current_user.is_authenticated:
+        user = MyAakashSession.query.filter_by(psid="00002588208").first()
     aakash = SessionService()
     aakash.token_login(user.tokens)
 
@@ -261,7 +262,7 @@ def get_test(test_id, test_code, number):
 
     return render_template(
         "chapter.html",
-        name="Anonymous",
+        name="Anonymous" if not current_user.is_authenticated else current_user.name,
         questions=sorted(serialize_questions, key=lambda x: x[-1]),
         subject="",
         chapter="",
@@ -305,7 +306,7 @@ def get_chapter(subject: str, chapter: str):
                 "[]",
                 "",
                 ques.type,
-                chapter
+                chapter,
             )
             serialize_questions.append(parent_q)
             for qu in a.all():
@@ -326,7 +327,7 @@ def get_chapter(subject: str, chapter: str):
                     qu.answer,
                     qu.solution,
                     qu.type,
-                    chapter
+                    chapter,
                 )
                 serialize_questions.append(q)
 
@@ -351,7 +352,7 @@ def get_chapter(subject: str, chapter: str):
             ques.answer,
             ques.solution,
             ques.type,
-            chapter
+            chapter,
         )
         serialize_questions.append(q)
 
