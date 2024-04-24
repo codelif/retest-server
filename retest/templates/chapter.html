@@ -10,7 +10,13 @@
 {% for sid, is_correct, question_id, question, choice_type, choice, answer, solution, qtype, chapter in questions %}
 <sl-card class="card-header" value="{{ question_id }}">
   <div slot="header">
-    <span class="question-header">Question #{{ loop.index }}</span>
+    {% if subject != "" %}
+      <span class="question-header">Question #{{ loop.count }}</span>
+    {% elif qtype == "QSTEM" %}
+      <span class="question-header">Comprehension</span>
+    {% else %}
+      <span class="question-header">Question #{{ sid }}</span>
+    {% endif %}
     <sl-dropdown>
       <sl-icon-button name="gear" label="Settings" slot="trigger"></sl-icon-button>
       <sl-menu>

@@ -173,8 +173,7 @@ def get_test(test_id, test_code, number):
         answers = None
 
     serialize_questions = []
-    count = 1
-    for question_id, question in questions.items():
+    for question_id, question in sorted(list(questions.items())):
         chapter = question["subjects"][0]["name"]
         question_id = int(question_id)
 
@@ -198,7 +197,7 @@ def get_test(test_id, test_code, number):
                 continue
             choice_type = True if question["question_type"] != "SAN" else False
             q = (
-                count,
+                question["sequence"],
                 True,
                 question_id,
                 content,
@@ -217,7 +216,7 @@ def get_test(test_id, test_code, number):
             chapter_id = question["chapters"][0]["id"]
             children_id = question["child_questions"]
             parent_q = (
-                count,
+                questions[str(children_id[0])]["sequence"],
                 True,
                 question_id,
                 content,
@@ -245,9 +244,9 @@ def get_test(test_id, test_code, number):
                 correct = True
 
                 q = (
-                    count,
+                    qu["sequence"],
                     correct,
-                    q_id,
+                    int(q_id),
                     co,
                     choice_type,
                     tuple(choices.values()),
@@ -258,12 +257,10 @@ def get_test(test_id, test_code, number):
                 )
                 serialize_questions.append(q)
 
-        count += 1
-
     return render_template(
         "chapter.html",
         name="Anonymous" if not current_user.is_authenticated else current_user.name,
-        questions=sorted(serialize_questions, key=lambda x: x[-1]),
+        questions=sorted(serialize_questions, key=lambda x: x[0]),
         subject="",
         chapter="",
     )
