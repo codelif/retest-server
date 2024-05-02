@@ -18,7 +18,7 @@ from sqlalchemy.orm import scoped_session, sessionmaker
 
 from . import db
 from .models import *
-from .sync import Sync, sync
+from .sync import Sync
 
 main = Blueprint("main", __name__)
 
