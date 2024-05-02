@@ -127,7 +127,7 @@ class Sync:
         qanswer: list,
         qsolution: str,
         qchap: dict,
-        qparentid: int | None,
+        qparentid: int,
     ):
 
         question = Questions(
@@ -291,7 +291,7 @@ class Sync:
             answer_struct = answers[qid]
             answer = answer_struct["answer"]
             solution = answer_struct["language_data"]["en"]["solution"]
-            parent_id: int | None = question.get("parent_question_id")
+            parent_id: int = question.get("parent_question_id")
 
             self.add_question(
                 qid,
