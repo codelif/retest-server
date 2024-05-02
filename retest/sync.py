@@ -282,6 +282,8 @@ class Sync:
             self.add_chapter(qchapter, qsub["name"])
 
         if qtype in stem_question_types:
+            if qid in self.questions:
+                return
             children_id = question["child_questions"]
             self.add_stem_question(
                 qid, qcontent, qdesc, test_pattern, qchapter, children_id
@@ -292,6 +294,13 @@ class Sync:
             answer = answer_struct["answer"]
             solution = answer_struct["language_data"]["en"]["solution"]
             parent_id: int = question.get("parent_question_id")
+
+            if qid in self.questions:
+                uanswer = answer_struct["selected_answer"] or []
+                uis_correct = answer_struct.get("is_correct")
+
+                self.add_attempt(qid, uanswer, uis_correct, test_id)
+                return
 
             self.add_question(
                 qid,
