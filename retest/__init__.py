@@ -19,7 +19,6 @@ db = SQLAlchemy(model_class=Base)
 
 def create_app():
     load_dotenv(".env.local")
-    load_dotenv(".env")
     app = Flask(__name__, STATIC_URL, STATIC_FOLDER)
 
     app.config["SECRET_KEY"] = (
