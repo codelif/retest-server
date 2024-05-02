@@ -11,7 +11,7 @@
 <sl-card class="card-header" value="{{ question_id }}">
   <div slot="header">
     {% if subject != "" %}
-      <span class="question-header">Question #{{ loop.count }}</span>
+      <span class="question-header">Question #{{ loop.index }}</span>
     {% elif qtype == "QSTEM" %}
       <span class="question-header">Comprehension</span>
     {% else %}

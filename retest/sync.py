@@ -1,7 +1,10 @@
 from datetime import datetime
+from typing import List
 
 import requests
 from myaakash import SessionService, TestPlatform
+from sqlalchemy.orm import Session
+from sqlalchemy.sql import select
 
 from .models import *
 
@@ -22,7 +25,7 @@ def generate_filters(config: dict):
 
     filters = {
         "type": [],
-        "pattern": config["patterns"],
+        "pattern": [],
         "user_state": ["completed"],
         "status": ["passed"],
         "mode": ["Online"],
@@ -38,8 +41,7 @@ def generate_filters(config: dict):
     return filters
 
 
-def test_pattern(test: dict):
-    test_short_code = test["short_code"] or test["test_short_sequence"]
+def get_test_pattern(test_short_code):
     test_pattern = "Mains"
 
     if test_short_code[-2] == "P":
@@ -48,53 +50,48 @@ def test_pattern(test: dict):
     return test_pattern
 
 
-def test_filter(test: dict, filter: dict) -> bool:
-    if test["status"] not in filter["status"]:
+def test_filter(test: dict, filters: dict) -> bool:
+    categories = ["status", "type", "mode", "user_state"]
+    for cat in categories:
+        if test[cat] not in filters[cat]:
+            return False
+
+    if get_test_pattern(test["short_code"]) not in filters["pattern"]:
         return False
-    elif test["type"] not in filter["type"]:
-        return False
-    elif test_pattern(test) not in filter["pattern"]:
-        return False
-    elif test["user_state"] not in filter["user_state"]:
-        return False
-    elif test["mode"] not in filter["mode"]:
-        return False
-    elif datetime.now() < datetime.fromisoformat(test["result_date_time"][:-6]):
+    if datetime.now() < datetime.fromisoformat(test["result_date_time"][:-6]):
         return False
 
     return True
 
 
-def sync(config: dict, aakash: SessionService, session, user_id):
-    current_user = session.query(MyAakashSession).filter_by(id=user_id).first()
-    filters = generate_filters(config)
+class Sync:
+    def __init__(self, session: Session, user_id: int, aakash: SessionService) -> None:
+        self.session = session
+        self.aakash = aakash
+        self.user = self.session.query(MyAakashSession).filter_by(id=user_id).first()
+        self.prefetch_db()
 
-    tests = list(
-        filter(lambda test: test_filter(test, filters), aakash.get_tests("passed"))
-    )
+    def get_tests(self, config: dict):
+        filters = generate_filters(config)
+        func_filter = lambda test: test_filter(test, filters)
+        tests = self.aakash.get_tests("passed")
+        return list(filter(func_filter, tests))
 
-    for i, test in enumerate(tests, start=1):
-        session.begin(nested=True)
-        test_id = test["id"]
-        test_number = test["number"]
-        test_short_code = test["short_code"] or test["test_short_sequence"]
-        tpattern = test_pattern(test)
-        if not session.query(Tests).filter_by(id=test_id).first():
-            session.add(
-                Tests(
-                    id=test_id,
-                    type=test["type"],
-                    short_code=test_short_code,
-                )
-            )
+    def prefetch_db(self):
+        stmt = select(Tests.id)
+        tests = self.session.execute(stmt).all()
+        stmt = select(Chapters.id)
+        chapters = self.session.execute(stmt).all()
+        stmt = select(Questions.id)
+        questions = self.session.execute(stmt).all()
 
-        print(
-            f"Hoarding Test '{test_short_code}' [{i}/{len(tests)}]     ",
-            end="\r",
-            flush=True,
-        )
+        self.tests: List[int] = [i[0] for i in tests]
+        self.chapters: List[int] = [i[0] for i in chapters]
+        self.questions: List[int] = [i[0] for i in questions]
 
-        url = aakash.get_url(
+    def fetch_remote_test(self, test_id, test_number, test_short_code):
+        print(test_id, test_number, test_short_code)
+        url = self.aakash.get_url(
             test_id,
             test_number,
             test_short_code,
@@ -106,107 +103,211 @@ def sync(config: dict, aakash: SessionService, session, user_id):
         questions = requests.get(question_json_link).json()["questions"]
         answers = test_platform.get_analysis_answers()
 
+        return questions, answers
+
+    def add_test(self, test_id: int, test_type: str, test_short_code: str):
+        test = Tests(id=test_id, type=test_type, short_code=test_short_code)
+        self.session.add(test)
+        self.tests.append(test_id)
+
+    def add_chapter(self, chapter: dict, subject: str):
+        chap = Chapters(id=chapter["id"], name=chapter["name"], subject=subject)
+        self.session.add(chap)
+        self.chapters.append(int(chapter["id"]))
+
+    def add_question(
+        self,
+        qid: int,
+        qcontent: str,
+        qdesc: str,
+        qtype: str,
+        qpattern: str,
+        qchoices: dict,
+        qmarking: str,
+        qanswer: list,
+        qsolution: str,
+        qchap: dict,
+        qparentid: int | None,
+    ):
+
+        question = Questions(
+            id=qid,
+            content=qcontent,
+            desc=qdesc,
+            type=qtype,
+            pattern=qpattern,
+            choices=qchoices,
+            marking_scheme=qmarking,
+            answer=qanswer,
+            solution=qsolution,
+            chapter_id=qchap["id"],
+            children_id=[],
+            parent_id=qparentid,
+        )
+
+        self.session.add(question)
+        self.questions.append(qid)
+
+    def add_stem_question(
+        self,
+        qid: int,
+        qcontent: str,
+        qdesc: str,
+        qpattern: str,
+        qchap: dict,
+        qchildren: list,
+    ):
+
+        question = Questions(
+            id=qid,
+            content=qcontent,
+            desc=qdesc,
+            type="QSTEM",
+            pattern=qpattern,
+            chapter_id=qchap["id"],
+            children_id=qchildren,
+        )
+        self.session.add(question)
+        self.questions.append(qid)
+
+    def add_attempt(self, qid: int, uanswer: list, uis_correct: bool, test_id: int):
+
+        attempt = Attempts(
+            question_id=qid,
+            answer=uanswer,
+            correct=uis_correct,
+            test_id=test_id,
+            account_psid=self.aakash.profile["psid"],
+        )
+        self.session.add(attempt)
+
+    def is_test_attempted(self, test_id: int) -> bool:
+
+        stmt = select(Attempts.id).where(
+            Attempts.test_id == test_id,
+            Attempts.account_psid == self.aakash.profile["psid"],
+        )
+        attempt = self.session.execute(stmt).first()
+
+        if attempt:
+            return True
+
+        return False
+
+    def sync(self, config: dict):
+
+        tests = self.get_tests(config)
+        for i, test in enumerate(tests, start=1):
+            self.session.begin_nested()
+            test_id = int(test["id"])
+            test_number = test["number"]
+            test_type = test["type"]
+            test_short_code = test["short_code"] or test["test_short_sequence"]
+            test_pattern = get_test_pattern(test_short_code)
+
+            if self.is_test_attempted(test_id):
+                continue
+
+            if test_id not in self.tests:
+                self.add_test(test_id, test_type, test_short_code)
+
+            questions, answers = self.fetch_remote_test(
+                test_id, test_number, test_short_code
+            )
+
+            self.sync_test(questions, answers, test_pattern, test_id)
+
+            self.user.sync_progress = int(i / len(tests) * 100)
+            self.session.commit()
+
+    def __choices_mapper(self, choice: dict):
+        return (choice["choice_id"], choice["text"])
+
+    def __answers_mapper(self, answer):
+        return (int(answer["question_id"]), answer)
+
+    def sync_test(
+        self, questions: dict, answers: list, test_pattern: str, test_id: int
+    ):
         for question_id, question in questions.items():
             question_id = int(question_id)
-            if (
-                not session.query(Chapters)
-                .filter_by(id=question["chapters"][0]["id"])
-                .first()
-            ):
-                session.add(
-                    Chapters(
-                        id=question["chapters"][0]["id"],
-                        name=question["chapters"][0]["name"],
-                        subject=question["subjects"][0]["name"],
-                    )
-                )
-            if question["question_type"] in ["SCMCQ", "MCMCQ", "SAN"]:
-                content = question["language_data"]["en"]["text"]
-                desc = question["language_data"]["en"]["short_text"]
-                choices = dict(
-                    map(
-                        lambda x: (x["choice_id"], x["text"]),
-                        question["language_data"]["en"]["choices"],
-                    )
-                )
-                marking_scheme = (
-                    f"{int(question['marks'])}/{int(question['negative_marks'] or '0')}"
-                )
+            question_type = question["question_type"]
+            question_subject = question["subjects"][0]
+            question_chapter = question["chapters"][0]
+            question_content = question["language_data"]["en"]["text"]
+            question_desc = question["language_data"]["en"]["short_text"]
 
-                answer_struct = list(
-                    filter(
-                        lambda x: x["question_id"] == question_id,
-                        answers,
-                    )
-                )
-                if not answer_struct:
-                    session.reset()
-                    continue
-                answer_struct = answer_struct[0]
+            question_choices = question["language_data"]["en"]["choices"]
+            choices_map = map(self.__choices_mapper, question_choices)
+            question_choices = dict(choices_map)
 
-                answer = answer_struct["answer"]
-                solution = answer_struct["language_data"]["en"]["solution"]
+            answers_mapped = map(self.__answers_mapper, answers)
+            answers_map = dict(answers_mapped)
+            self.sync_question(
+                question_id,
+                question_type,
+                question_subject,
+                question_chapter,
+                question_content,
+                question_desc,
+                question_choices,
+                question,
+                answers_map,
+                test_id,
+                test_pattern,
+            )
 
-                parent_id = question.get("parent_question_id")
-                chapter_id = question["chapters"][0]["id"]
-                children_id = []
+    def __marking_scheme(self, question: dict):
+        return f"{int(question['marks'])}/{int(question['negative_marks'] or '0')}"
 
-                if not session.query(Questions).filter_by(id=question_id).first():
-                    session.add(
-                        Questions(
-                            id=question_id,
-                            content=content,
-                            desc=desc,
-                            type=question["question_type"],
-                            pattern=tpattern,
-                            choices=choices,
-                            marking_scheme=marking_scheme,
-                            answer=answer,
-                            solution=solution,
-                            chapter_id=chapter_id,
-                            children_id=children_id,
-                            parent_id=parent_id,
-                        )
-                    )
+    def sync_question(
+        self,
+        qid: int,
+        qtype: str,
+        qsub: dict,
+        qchapter: dict,
+        qcontent: str,
+        qdesc: str,
+        qchoices: dict,
+        question: dict,
+        answers: dict,
+        test_id: int,
+        test_pattern: str,
+    ):
+        stem_question_types = ["QSTEM", "Scenario"]
+        if qid in self.questions:
+            return
 
-                if (
-                    not session.query(Attempts)
-                    .filter_by(
-                        test_id=test_id,
-                        question_id=question_id,
-                        account_psid=aakash.profile["psid"],
-                    )
-                    .first()
-                ):
-                    session.add(
-                        Attempts(
-                            question_id=question_id,
-                            answer=answer,
-                            correct=answer_struct.get("is_correct"),
-                            test_id=test_id,
-                            account_psid=aakash.profile["psid"],
-                        )
-                    )
-            elif question["question_type"] in ["Scenario", "QSTEM"]:
-                content = question["language_data"]["en"]["text"]
-                desc = question["language_data"]["en"]["short_text"]
-                chapter_id = question["chapters"][0]["id"]
-                children_id = question["child_questions"]
+        if int(qchapter["id"]) not in self.chapters:
+            self.add_chapter(qchapter, qsub["name"])
 
-                if not session.query(Questions).filter_by(id=question_id).first():
-                    session.add(
-                        Questions(
-                            id=question_id,
-                            content=content,
-                            desc=desc,
-                            type="QSTEM",
-                            pattern=tpattern,
-                            chapter_id=chapter_id,
-                            children_id=children_id,
-                        )
-                    )
+        if qtype in stem_question_types:
+            children_id = question["child_questions"]
+            self.add_stem_question(
+                qid, qcontent, qdesc, test_pattern, qchapter, children_id
+            )
+        else:
+            qmarking = self.__marking_scheme(question)
+            answer_struct = answers[qid]
+            answer = answer_struct["answer"]
+            solution = answer_struct["language_data"]["en"]["solution"]
+            parent_id: int | None = question.get("parent_question_id")
 
-        current_user.sync_progress = int(i / len(tests) * 100)
-        session.commit()
+            self.add_question(
+                qid,
+                qcontent,
+                qdesc,
+                qtype,
+                test_pattern,
+                qchoices,
+                qmarking,
+                answer,
+                solution,
+                qchapter,
+                parent_id,
+            )
 
-    print()
+            uanswer = answer_struct["selected_answer"] or []
+            uis_correct = answer_struct.get("is_correct")
+
+            self.add_attempt(qid, uanswer, uis_correct, test_id)

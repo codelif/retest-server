@@ -44,7 +44,7 @@ function set_turbo() {
       set_checkbox(false)
       turbo = false
     }
-  }, 1000)
+  }, 3000)
 }
 
 function set_checkbox(disabled){

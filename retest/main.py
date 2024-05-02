@@ -2,15 +2,23 @@ from threading import Thread
 from urllib.parse import unquote
 
 import requests
-from flask import (Blueprint, abort, copy_current_request_context, jsonify,
-                   redirect, render_template, request, url_for)
+from flask import (
+    Blueprint,
+    abort,
+    copy_current_request_context,
+    jsonify,
+    redirect,
+    render_template,
+    request,
+    url_for,
+)
 from flask_login import current_user, login_required
 from myaakash import SessionService, TestPlatform
 from sqlalchemy.orm import scoped_session, sessionmaker
 
 from . import db
 from .models import *
-from .sync import sync
+from .sync import Sync, sync
 
 main = Blueprint("main", __name__)
 
@@ -417,13 +425,13 @@ def set_sync_settings():
         session.commit()
 
         try:
-            sync(config, aakash, session, user_id)
-        except Exception:
-            pass
-
-        user.is_in_sync = False
-        user.sync_progress = 100
-        session.commit()
+            Sync(session, user_id, aakash).sync(config)
+            # sync(config, aakash, session, user_id)
+        except Exception as e:
+            user.is_in_sync = False
+            user.sync_progress = 100
+            session.commit()
+            raise e
 
     t = Thread(
         target=start_sync, args=(config, aakash, current_user.id, session_factory)
