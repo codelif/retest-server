@@ -25,7 +25,9 @@ def create_app():
         "210d47c8b857c8081b538bfdc6d4308217eb6890fb8cb9fdac7d30c0f0cd88db"
     )
     # app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///db.sqlite"
-    app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("POSTGRES_URL").replace("postgres://", "postgresql://")
+    app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("POSTGRES_URL").replace(
+        "postgres://", "postgresql://"
+    )
     # app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("AWS_POSTGRES_URL")
 
     db.init_app(app)

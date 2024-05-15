@@ -5,6 +5,7 @@ import requests
 from myaakash import SessionService, TestPlatform
 from sqlalchemy.orm import Session
 from sqlalchemy.sql import select
+from .utils import StyledThread
 
 from .models import *
 
@@ -197,23 +198,25 @@ class Sync:
     def sync(self, config: dict):
 
         tests = self.get_tests(config)
-        for i, test in enumerate(tests, start=1):
+        tests = self.fetch_async(tests)
+
+        for i, (test, questions, answers) in enumerate(tests, start=1):
             self.session.begin_nested()
             test_id = int(test["id"])
-            test_number = test["number"]
-            test_type = test["type"]
+            # test_number = test["number"]
+            # test_type = test["type"]
             test_short_code = test["short_code"] or test["test_short_sequence"]
             test_pattern = get_test_pattern(test_short_code)
 
             if self.is_test_attempted(test_id):
                 continue
 
-            if test_id not in self.tests:
-                self.add_test(test_id, test_type, test_short_code)
+            # if test_id not in self.tests:
+            #     self.add_test(test_id, test_type, test_short_code)
 
-            questions, answers = self.fetch_remote_test(
-                test_id, test_number, test_short_code
-            )
+            # questions, answers = self.fetch_remote_test(
+            #     test_id, test_number, test_short_code
+            # )
 
             self.sync_test(questions, answers, test_pattern, test_id)
 
@@ -222,6 +225,50 @@ class Sync:
 
     def __choices_mapper(self, choice: dict):
         return (choice["choice_id"], choice["text"])
+
+    def multi_fetch(self, tests: List):
+        result = []
+        for test in tests:
+            test_id = int(test["id"])
+            test_number = test["number"]
+            test_type = test["type"]
+            test_short_code = test["short_code"] or test["test_short_sequence"]
+
+            if test_id not in self.tests:
+                self.add_test(test_id, test_type, test_short_code)
+
+            questions, answers = self.fetch_remote_test(
+                test_id, test_number, test_short_code
+            )
+            # print(test_id, test_number, test_short_code)
+            result.append((test, questions, answers))
+
+        return result
+
+    def fetch_async(self, tests: List):
+
+        thread_nos = min(len(tests), 5)
+        per, rem = divmod(len(tests), thread_nos)
+        print(thread_nos)
+        results = []
+        ts = []
+        for i in range(thread_nos):
+            no = per
+            if rem > 0:
+                no = no + 1
+                rem -= 1
+
+            queue_tests, tests = tests[:no], tests[no:]
+            t = StyledThread(target=self.multi_fetch, args=(queue_tests,))
+            t.start()
+            ts.append(t)
+
+        print(len(ts))
+        for t in ts:
+            t: StyledThread
+            results.extend(t.join())
+
+        return results
 
     def __answers_mapper(self, answer):
         return (int(answer["question_id"]), answer)

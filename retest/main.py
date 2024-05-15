@@ -21,6 +21,7 @@ from .models import *
 from .sync import Sync
 
 main = Blueprint("main", __name__)
+T = []
 
 
 @main.route("/")
@@ -386,9 +387,29 @@ def get_sync_progress():
     return str(progress)
 
 
+def clean_threads():
+    global T
+
+    new_t = []
+    for i in T:
+        i: Thread
+        if i.is_alive():
+            new_t.append(i)
+
+    T = new_t
+    if len(T) == 0:
+        return True
+    return False
+
+
 @main.get("/status")
 @login_required
 def get_status():
+
+    if clean_threads():
+        current_user.is_in_sync = False
+        db.session.commit()
+
     progress = current_user.sync_progress
     if not progress:
         progress = 0
@@ -436,7 +457,7 @@ def set_sync_settings():
     t = Thread(
         target=start_sync, args=(config, aakash, current_user.id, session_factory)
     )
-
+    T.append(t)
     t.start()
 
     return jsonify({"message": "OK"})
