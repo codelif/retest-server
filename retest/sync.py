@@ -198,25 +198,25 @@ class Sync:
     def sync(self, config: dict):
 
         tests = self.get_tests(config)
-        tests = self.fetch_async(tests)
+        # tests = self.fetch_async(tests)
 
-        for i, (test, questions, answers) in enumerate(tests, start=1):
+        for i, test in enumerate(tests, start=1):
             self.session.begin_nested()
             test_id = int(test["id"])
-            # test_number = test["number"]
-            # test_type = test["type"]
+            test_number = test["number"]
+            test_type = test["type"]
             test_short_code = test["short_code"] or test["test_short_sequence"]
             test_pattern = get_test_pattern(test_short_code)
 
             if self.is_test_attempted(test_id):
                 continue
 
-            # if test_id not in self.tests:
-            #     self.add_test(test_id, test_type, test_short_code)
+            if test_id not in self.tests:
+                self.add_test(test_id, test_type, test_short_code)
 
-            # questions, answers = self.fetch_remote_test(
-            #     test_id, test_number, test_short_code
-            # )
+            questions, answers = self.fetch_remote_test(
+                test_id, test_number, test_short_code
+            )
 
             self.sync_test(questions, answers, test_pattern, test_id)
 
